@@ -1,0 +1,21 @@
+# Fix general del proyecto
+
+- Fecha de creación: 2026-08-29
+- Descripción: Ajuste general de estabilidad y mantenimiento para la aplicación de tabla periódica. Se corrigió la dependencia faltante del módulo de cálculo químico, se fortaleció la carga de archivos JSON con rutas absolutas relativas al script, se mejoró la normalización de símbolos en la búsqueda/análisis, se creó un entorno local `.venv`, se instaló Flet 0.86.5 con su CLI, se migró la app a una plantilla creada con `flet create` y se eliminaron los archivos raíz previos que ya estaban duplicados dentro de `periodic_table_app/src`.
+- Archivos modificados:
+  - `README.md`
+  - `.gitignore`
+  - `periodic_table_app/README.md`
+  - `periodic_table_app/pyproject.toml`
+  - `periodic_table_app/requirements.txt`
+  - `periodic_table_app/src/main.py`
+  - `periodic_table_app/src/algorithm.py`
+  - `periodic_table_app/src/colors.json`
+  - `periodic_table_app/src/elements.json`
+  - `periodic_table_app/src/table.json`
+  - `periodic_table_app/tests/test_main.py`
+  - `app` eliminado
+  - `component` eliminado
+  - `colors.json` eliminado
+  - `elements.json` eliminado
+  - `table.json` eliminado

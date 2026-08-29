@@ -1,6 +1,18 @@
 import flet as ft
 import json as js
-from algorithm import calculate_chemistry_data as alg
+import algorithm as alg
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+
+
+def load_json(filename):
+    with (BASE_DIR / filename).open("r", encoding="utf-8") as f:
+        return js.load(f)
+
+
+def normalize_symbol(value):
+    return (value or "").strip().capitalize()
 
 def main(page: ft.Page):
     page.theme_mode = ft.ThemeMode.DARK
@@ -9,12 +21,9 @@ def main(page: ft.Page):
     page.padding = 30
 
     try:
-        with open("elements.json", "r", encoding="utf-8") as f:
-            ELEMENTS_DATA = js.load(f)
-        with open("table.json", "r", encoding="utf-8") as f:
-            PERIODIC_TABLE = js.load(f)
-        with open("colors.json", "r", encoding="utf-8") as f:
-            GRADIENTS_DATA = js.load(f)
+        ELEMENTS_DATA = load_json("elements.json")
+        PERIODIC_TABLE = load_json("table.json")
+        GRADIENTS_DATA = load_json("colors.json")
     except FileNotFoundError as e:
         page.add(ft.Text(f"Error crítico: No se encontró el archivo {e.filename}", color="red", size=20))
         return
@@ -22,26 +31,26 @@ def main(page: ft.Page):
     element_buttons = {}
 
     ALIGNMENTS = {
-        "top_left": ft.alignment.top_left,
-        "top_center": ft.alignment.top_center,
-        "top_right": ft.alignment.top_right,
-        "center": ft.alignment.center,
-        "bottom_left": ft.alignment.bottom_left,
-        "bottom_center": ft.alignment.bottom_center,
-        "bottom_right": ft.alignment.bottom_right,
+        "top_left": ft.Alignment(-1, -1),
+        "top_center": ft.Alignment(0, -1),
+        "top_right": ft.Alignment(1, -1),
+        "center": ft.Alignment(0, 0),
+        "bottom_left": ft.Alignment(-1, 1),
+        "bottom_center": ft.Alignment(0, 1),
+        "bottom_right": ft.Alignment(1, 1),
     }
     
     def get_alignment(name):
-        return ALIGNMENTS.get(name, ft.alignment.center)
+        return ALIGNMENTS.get(name, ALIGNMENTS["center"])
 
     
     detail_name = ft.Text("Selecciona un elemento", size=30, weight=ft.FontWeight.BOLD)
     detail_info = ft.Text("Haz clic en un elemento para ver sus propiedades", size=16, text_align=ft.TextAlign.CENTER)
-    detail_chem = ft.Text("", size=14, text_align=ft.TextAlign.CENTER, color=ft.Colors.WHITE70, selectable=True)
+    detail_chem = ft.Text("", size=14, text_align=ft.TextAlign.CENTER, color=ft.Colors.WHITE_70, selectable=True)
     
     info_card = ft.Container(
         content=ft.Column(
-            [detail_name, detail_info, ft.Divider(color=ft.Colors.WHITE24), detail_chem],
+            [detail_name, detail_info, ft.Divider(color=ft.Colors.WHITE_24), detail_chem],
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             scroll=ft.ScrollMode.AUTO
@@ -51,7 +60,7 @@ def main(page: ft.Page):
         bgcolor=ft.Colors.BLUE_ACCENT,
         border_radius=15,
         padding=20,
-        shadow=ft.BoxShadow(blur_radius=10, color=ft.Colors.BLACK45)
+        shadow=ft.BoxShadow(blur_radius=10, color=ft.Colors.BLACK_45)
     )
 
     def analyze_combination(sym1, sym2):
@@ -72,13 +81,11 @@ def main(page: ft.Page):
         if (v1 == 4 and v2 == 5) or (v1 == 5 and v2 == 4):
             return "Semiconductor Tipo N (Dopaje con exceso de e⁻)"
 
-
         if (v1 == 4 and v2 == 3) or (v1 == 3 and v2 == 4):
             return "Semiconductor Tipo P (Creación de huecos)"
 
         if v1 <= 3 and v2 <= 3:
             return "Material Conductor (Enlace Metálico)"
-
 
         if v1 >= 6 or v2 >= 6 or v1 == 8 or v2 == 8:
             return "Material Aislante / Dieléctrico"
@@ -102,10 +109,12 @@ def main(page: ft.Page):
                     f"Electrones de Valencia: {chem_data['valence']}   |   Huecos : {chem_data['holes']}\n\n"
                     f"Configuración Electrónica: {chem_data['configuration']}"
                 )
+            else:
+                detail_chem.value = "No se pudo calcular la configuración electrónica."
         page.update()
 
     def handle_search(e):
-        term = e.control.value.lower()
+        term = (e.control.value or "").strip().lower()
         for symbol, buttons in element_buttons.items():
             data = ELEMENTS_DATA.get(symbol, {})
             name = data.get("name", "").lower()
@@ -124,8 +133,8 @@ def main(page: ft.Page):
     result_text = ft.Text("", size=16, weight=ft.FontWeight.BOLD, color=ft.Colors.AMBER_300)
 
     def handle_analyze(e):
-        sym1 = input_a.value.strip().capitalize()
-        sym2 = input_b.value.strip().capitalize()
+        sym1 = normalize_symbol(input_a.value)
+        sym2 = normalize_symbol(input_b.value)
         result_text.value = analyze_combination(sym1, sym2)
         page.update()
 
@@ -134,7 +143,7 @@ def main(page: ft.Page):
             [
                 ft.Text("Dopaje y Materiales", size=20, weight=ft.FontWeight.BOLD),
                 ft.Row([input_a, input_b], alignment="center"),
-                ft.ElevatedButton("Analizar Unión", icon=ft.Icons.BOLT, on_click=handle_analyze),
+                ft.Button("Analizar Unión", icon=ft.Icons.BOLT, on_click=handle_analyze),
                 result_text,
             ],
             alignment="center", horizontal_alignment="center", spacing=10,
@@ -160,7 +169,7 @@ def main(page: ft.Page):
 
         btn = ft.Container(
             content=ft.Text(symbol, weight="bold", color="white", size=14),
-            width=55, height=55, border_radius=8, alignment=ft.alignment.center,
+            width=55, height=55, border_radius=8, alignment=ft.Alignment(0, 0),
             gradient=gradient, bgcolor=ft.Colors.GREY_800 if not gradient else None,
             data=symbol, on_click=show_details, animate_opacity=250, animate_scale=250,
             shadow=ft.BoxShadow(blur_radius=6, color="black45"),
@@ -189,4 +198,5 @@ def main(page: ft.Page):
         )
     )
 
-ft.app(target=main)
+if __name__ == "__main__":
+    ft.run(main)
